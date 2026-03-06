@@ -36,6 +36,19 @@ pyinstaller --windowed --name wxHelloWorld --strip --noupx app.py
 The GitHub Actions workflow (`.github/workflows/build.yml`) builds the `.exe`
 on every push to `main` and uploads it as an artifact.
 
+Helpful commands
+
+```terminal
+# list recent runs (non-inactive)
+gh run list
+
+# interactively view summary of workflow run
+gh run view
+
+# non-interactively view fail log for latest run
+RUN_ID=$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId') && gh run view $RUN_ID --log-failed
+```
+
 ## Comparison
 
 Compare this project to:
