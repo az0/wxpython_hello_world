@@ -17,12 +17,18 @@ pip install -r requirements.txt
 python app.py
 ```
 
-## Building the .exe (locally on Windows)
+## Building the .exe locally on Windows
 
 ```bash
 pip install -r requirements.txt
+
+# One-file build (single .exe)
 pyinstaller --onefile --windowed --name wxHelloWorld --strip --noupx app.py
 # output: dist/wxHelloWorld.exe
+
+# One-directory build (folder with .exe and dependencies)
+pyinstaller --windowed --name wxHelloWorld --strip --noupx app.py
+# output: dist/wxHelloWorld/wxHelloWorld.exe
 ```
 
 ## CI / CD
