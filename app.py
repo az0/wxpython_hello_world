@@ -31,6 +31,9 @@ class MainFrame(wx.Frame):
         )
         toolbar.Realize()
 
+        # --- Status bar ---
+        self.CreateStatusBar()
+
         # --- TreeCtrl ---
         self.tree = wx.TreeCtrl(self, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT)
         self.root = self.tree.AddRoot("Hidden Root")
@@ -38,10 +41,6 @@ class MainFrame(wx.Frame):
         # Seed a few items so the tree isn't empty on start
         for _ in range(3):
             self._add_random_item()
-
-        # --- Status bar ---
-        self.CreateStatusBar()
-        self._update_status()
 
         # --- Event bindings ---
         self.Bind(wx.EVT_TOOL, self._on_add_random, add_tool)
