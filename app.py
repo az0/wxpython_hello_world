@@ -117,7 +117,7 @@ def main(argv=None):
     app.SetTopWindow(frame)
     frame.Show()
     if args.smoke_test:
-        wx.CallLater(1000, finish_smoke_test, app, frame)
+        app.smoke_test_timer = wx.CallLater(1000, finish_smoke_test, app, frame)
     app.MainLoop()
     return 0
 
