@@ -6,6 +6,12 @@ import wx
 from words import random_label
 
 
+def finish_smoke_test(app, frame):
+    if frame:
+        frame.Destroy()
+    wx.CallAfter(app.ExitMainLoop)
+
+
 class MainFrame(wx.Frame):
     """Main application window."""
 
@@ -108,9 +114,10 @@ def main(argv=None):
 
     app = wx.App()
     frame = MainFrame()
+    app.SetTopWindow(frame)
     frame.Show()
     if args.smoke_test:
-        wx.CallLater(1000, frame.Close)
+        wx.CallLater(1000, finish_smoke_test, app, frame)
     app.MainLoop()
     return 0
 
