@@ -1,0 +1,47 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12 (64-bit)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build EXE with PyInstaller
+        run: >
+          pyinstaller
+          --onefile
+          --windowed
+          --name wxHelloWorld
+          --strip
+          --noupx
+          app.py
+
+      - name: Show build size
+        run: |
+          echo "--- dist contents ---"
+          dir dist
+          echo "--- compressed size estimate ---"
+          powershell -Command "Compress-Archive -Path dist\wxHelloWorld.exe -DestinationPath dist\wxHelloWorld.zip"
+          dir dist\wxHelloWorld.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wxHelloWorld-windows-x64
+          path: dist/wxHelloWorld.exe
