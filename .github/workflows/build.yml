@@ -31,6 +31,20 @@ jobs:
           --noupx
           app.py
 
+      - name: Smoke test built EXE
+        shell: powershell
+        run: |
+          $exe = "dist\wxHelloWorld\wxHelloWorld.exe"
+          $proc = Start-Process -FilePath $exe -ArgumentList "--smoke-test" -PassThru
+          $finished = $proc.WaitForExit(15000)
+          if (-not $finished) {
+            $proc.Kill()
+            throw "Smoke test timed out after 15 seconds"
+          }
+          if ($proc.ExitCode -ne 0) {
+            throw "Smoke test failed with exit code $($proc.ExitCode)"
+          }
+
       - name: Show build size
         run: |
           echo "--- dist contents ---"

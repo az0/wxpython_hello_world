@@ -1,5 +1,6 @@
 """wxPython Hello World - TreeView demo with toolbar."""
 
+import argparse
 import wx
 
 from words import random_label
@@ -100,12 +101,19 @@ class MainFrame(wx.Frame):
             self.SetStatusText("Selected: {}".format(self.tree.GetItemText(item)))
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--smoke-test", action="store_true")
+    args = parser.parse_args(argv)
+
     app = wx.App()
     frame = MainFrame()
     frame.Show()
+    if args.smoke_test:
+        wx.CallLater(1000, frame.Close)
     app.MainLoop()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
