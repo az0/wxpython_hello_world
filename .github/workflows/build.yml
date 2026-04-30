@@ -22,14 +22,63 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install UPX
+        run: choco install upx --yes
+
       - name: Build EXE with PyInstaller
         run: >
           pyinstaller
           --windowed
           --name wxHelloWorld
           --strip
-          --noupx
+          --exclude-module wx.html
+          --exclude-module wx.html2
+          --exclude-module wx.xml
+          --exclude-module wx.richtext
+          --exclude-module wx.stc
+          --exclude-module wx.media
+          --exclude-module wx.grid
+          --exclude-module wx.dataview
+          --exclude-module wx.glcanvas
+          --exclude-module wx.svg
+          --exclude-module wx.propgrid
+          --exclude-module wx.ribbon
+          --exclude-module wx.aui
+          --exclude-module wx.py
+          --exclude-module tkinter
+          --exclude-module unittest
+          --exclude-module test
+          --exclude-module email
+          --exclude-module pydoc
+          --exclude-module doctest
+          --exclude-module sqlite3
+          --exclude-module ssl
+          --exclude-module asyncio
+          --exclude-module multiprocessing
+          --exclude-module lib2to3
+          --exclude-module ensurepip
+          --exclude-module venv
+          --exclude-module idlelib
+          --exclude-module turtledemo
           app.py
+
+      - name: Remove unused files from dist
+        shell: powershell
+        run: |
+          $dist = "dist\wxHelloWorld"
+          # Remove locale files except English
+          $localeDirs = @("share", "wx\locale")
+          foreach ($d in $localeDirs) {
+            $p = Join-Path $dist $d
+            if (Test-Path $p) { Remove-Item -Recurse -Force $p }
+          }
+          # Remove unused wx DLLs if present
+          $patterns = @("wx*html*", "wx*stc*", "wx*richtext*", "wx*media*", "wx*gl*", "wx*xml*", "wx*xrc*", "wx*propgrid*", "wx*ribbon*", "wx*aui*", "wx*svg*")
+          foreach ($pat in $patterns) {
+            Get-ChildItem -Path $dist -Recurse -Filter $pat | Remove-Item -Force -ErrorAction SilentlyContinue
+          }
+          # Remove .pdb debug files
+          Get-ChildItem -Path $dist -Recurse -Filter "*.pdb" | Remove-Item -Force -ErrorAction SilentlyContinue
 
       - name: Smoke test
         run: python app.py --smoke-test
@@ -68,7 +117,50 @@ jobs:
           --name wxHelloWorld
           --strip
           --noupx
+          --exclude-module wx.html
+          --exclude-module wx.html2
+          --exclude-module wx.xml
+          --exclude-module wx.richtext
+          --exclude-module wx.stc
+          --exclude-module wx.media
+          --exclude-module wx.grid
+          --exclude-module wx.dataview
+          --exclude-module wx.glcanvas
+          --exclude-module wx.svg
+          --exclude-module wx.propgrid
+          --exclude-module wx.ribbon
+          --exclude-module wx.aui
+          --exclude-module wx.py
+          --exclude-module tkinter
+          --exclude-module unittest
+          --exclude-module test
+          --exclude-module email
+          --exclude-module pydoc
+          --exclude-module doctest
+          --exclude-module sqlite3
+          --exclude-module ssl
+          --exclude-module asyncio
+          --exclude-module multiprocessing
+          --exclude-module lib2to3
+          --exclude-module ensurepip
+          --exclude-module venv
+          --exclude-module idlelib
+          --exclude-module turtledemo
           app.py
+
+      - name: Remove unused files from .app
+        run: |
+          CONTENTS="dist/wxHelloWorld.app/Contents"
+          FWDIR="$CONTENTS/Frameworks"
+          RESDIR="$CONTENTS/Resources"
+          # Remove unused wx dylibs
+          for pat in "*html*" "*stc*" "*richtext*" "*media*" "*gl*" "*xml*" "*xrc*" "*propgrid*" "*ribbon*" "*aui*" "*svg*"; do
+            find "$FWDIR" -name "libwx_osx*${pat}*" -delete 2>/dev/null || true
+          done
+          # Remove locale/share directories
+          rm -rf "$RESDIR/share" "$FWDIR/wx/locale" 2>/dev/null || true
+          # Remove .pyi stub files
+          find "$FWDIR" -name "*.pyi" -delete 2>/dev/null || true
 
       - name: Smoke test built app
         run: |
