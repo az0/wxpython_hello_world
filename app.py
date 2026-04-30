@@ -1,6 +1,7 @@
 """wxPython Hello World - TreeView demo with toolbar."""
 
 import argparse
+import os
 import wx
 
 from words import random_label
@@ -12,7 +13,7 @@ def run_smoke_test(app, frame):
     app.ProcessPendingEvents()
     frame.Destroy()
     app.ProcessPendingEvents()
-    return 0
+    os._exit(0)
 
 
 class MainFrame(wx.Frame):
