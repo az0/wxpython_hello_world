@@ -7,6 +7,8 @@ dist/
 build/
 *.spec
 *.exe
+*.dmg
+*.app
 .venv/
 venv/
 env/
