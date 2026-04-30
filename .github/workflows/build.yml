@@ -31,6 +31,10 @@ jobs:
           --windowed
           --name wxHelloWorld
           --strip
+          --upx-exclude python312.dll
+          --upx-exclude vcruntime140.dll
+          --upx-exclude vcruntime140_1.dll
+          --upx-exclude ucrtbase.dll
           --exclude-module wx.html
           --exclude-module wx.html2
           --exclude-module wx.xml
