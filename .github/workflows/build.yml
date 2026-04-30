@@ -45,6 +45,8 @@ jobs:
           --exclude-module wx.ribbon
           --exclude-module wx.aui
           --exclude-module wx.py
+          --exclude-module wx.adv
+          --exclude-module wx.xrc
           --exclude-module tkinter
           --exclude-module unittest
           --exclude-module test
@@ -60,6 +62,16 @@ jobs:
           --exclude-module venv
           --exclude-module idlelib
           --exclude-module turtledemo
+          --exclude-module xmlrpc
+          --exclude-module ftplib
+          --exclude-module smtplib
+          --exclude-module imaplib
+          --exclude-module poplib
+          --exclude-module socketserver
+          --exclude-module webbrowser
+          --exclude-module turtle
+          --exclude-module concurrent
+          --exclude-module logging
           app.py
 
       - name: Remove unused files from dist
@@ -131,6 +143,8 @@ jobs:
           --exclude-module wx.ribbon
           --exclude-module wx.aui
           --exclude-module wx.py
+          --exclude-module wx.adv
+          --exclude-module wx.xrc
           --exclude-module tkinter
           --exclude-module unittest
           --exclude-module test
@@ -146,6 +160,16 @@ jobs:
           --exclude-module venv
           --exclude-module idlelib
           --exclude-module turtledemo
+          --exclude-module xmlrpc
+          --exclude-module ftplib
+          --exclude-module smtplib
+          --exclude-module imaplib
+          --exclude-module poplib
+          --exclude-module socketserver
+          --exclude-module webbrowser
+          --exclude-module turtle
+          --exclude-module concurrent
+          --exclude-module logging
           app.py
 
       - name: Remove unused files from .app
@@ -153,14 +177,36 @@ jobs:
           CONTENTS="dist/wxHelloWorld.app/Contents"
           FWDIR="$CONTENTS/Frameworks"
           RESDIR="$CONTENTS/Resources"
-          # Remove unused wx dylibs
-          for pat in "*html*" "*stc*" "*richtext*" "*media*" "*gl*" "*xml*" "*xrc*" "*propgrid*" "*ribbon*" "*aui*" "*svg*"; do
+
+          echo "=== Before cleanup ==="
+          du -sh dist/wxHelloWorld.app
+
+          # Remove unused wx native dylibs
+          for pat in "*html*" "*stc*" "*richtext*" "*media*" "*gl*" "*xml*" "*xrc*" "*propgrid*" "*ribbon*" "*aui*" "*svg*" "*webview*" "*qa*"; do
             find "$FWDIR" -name "libwx_osx*${pat}*" -delete 2>/dev/null || true
           done
+
+          # Remove unused wx Python extension modules (.so files)
+          for mod in html html2 stc richtext media grid dataview glcanvas svg propgrid ribbon aui xml xrc py adv; do
+            find "$FWDIR" -path "*/wx/*${mod}*" \( -name "*.so" -o -name "*.dylib" \) -delete 2>/dev/null || true
+            find "$FWDIR" -path "*/wx/${mod}" -type d -exec rm -rf {} + 2>/dev/null || true
+          done
+
           # Remove locale/share directories
-          rm -rf "$RESDIR/share" "$FWDIR/wx/locale" 2>/dev/null || true
-          # Remove .pyi stub files
+          rm -rf "$RESDIR/share" 2>/dev/null || true
+          find "$FWDIR" -path "*/locale" -type d -exec rm -rf {} + 2>/dev/null || true
+          find "$FWDIR" -path "*/locales" -type d -exec rm -rf {} + 2>/dev/null || true
+
+          # Remove .pyi stub files and __pycache__
           find "$FWDIR" -name "*.pyi" -delete 2>/dev/null || true
+          find "$FWDIR" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+          find "$FWDIR" -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
+
+          # Strip all dylibs and .so files more aggressively
+          find "$FWDIR" \( -name "*.dylib" -o -name "*.so" \) -exec strip -x -S {} \; 2>/dev/null || true
+
+          echo "=== After cleanup ==="
+          du -sh dist/wxHelloWorld.app
 
       - name: Smoke test built app
         run: |
