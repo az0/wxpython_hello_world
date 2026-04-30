@@ -31,10 +31,33 @@ pyinstaller --windowed --name wxHelloWorld --strip --noupx app.py
 # output: dist/wxHelloWorld/wxHelloWorld.exe
 ```
 
+## Building the .app / DMG locally on macOS
+
+```bash
+pip install -r requirements.txt
+
+# Build the .app bundle
+pyinstaller --windowed --name wxHelloWorld --strip --noupx app.py
+# output: dist/wxHelloWorld.app
+
+# Create a DMG installer (requires create-dmg: brew install create-dmg)
+create-dmg \
+  --volname "wxHelloWorld" \
+  --window-pos 200 120 \
+  --window-size 600 400 \
+  --icon-size 100 \
+  --icon "wxHelloWorld.app" 150 190 \
+  --app-drop-link 450 190 \
+  --no-internet-enable \
+  "dist/wxHelloWorld.dmg" \
+  "dist/wxHelloWorld.app"
+# output: dist/wxHelloWorld.dmg
+```
+
 ## CI / CD
 
-The GitHub Actions workflow (`.github/workflows/build.yml`) builds the `.exe`
-on every push to `main` and uploads it as an artifact.
+The GitHub Actions workflow (`.github/workflows/build.yml`) builds the Windows
+`.exe` and macOS `.dmg` on every push to `main` and uploads them as artifacts.
 
 Helpful commands
 

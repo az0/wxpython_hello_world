@@ -1,4 +1,4 @@
-name: Build Windows EXE
+name: Build Installers
 
 on:
   push:
@@ -58,3 +58,60 @@ jobs:
         with:
           name: wxHelloWorld-windows-x64
           path: dist/wxHelloWorld
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build .app bundle with PyInstaller
+        run: >
+          pyinstaller
+          --windowed
+          --name wxHelloWorld
+          --strip
+          --noupx
+          app.py
+
+      - name: Smoke test built app
+        run: |
+          dist/wxHelloWorld.app/Contents/MacOS/wxHelloWorld --smoke-test
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG installer
+        run: |
+          create-dmg \
+            --volname "wxHelloWorld" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "wxHelloWorld.app" 150 190 \
+            --app-drop-link 450 190 \
+            --no-internet-enable \
+            "dist/wxHelloWorld.dmg" \
+            "dist/wxHelloWorld.app"
+
+      - name: Show build size
+        run: |
+          echo "--- dist contents ---"
+          ls -lh dist/
+          echo "--- .app bundle size ---"
+          du -sh dist/wxHelloWorld.app
+          echo "--- DMG size ---"
+          ls -lh dist/wxHelloWorld.dmg
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wxHelloWorld-macos-dmg
+          path: dist/wxHelloWorld.dmg
