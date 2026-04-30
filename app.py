@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import threading
 import wx
 
 from words import random_label
@@ -116,10 +117,13 @@ def main(argv=None):
     parser.add_argument("--smoke-test", action="store_true")
     args = parser.parse_args(argv)
 
+    if args.smoke_test:
+        threading.Timer(10.0, lambda: os._exit(1)).start()
+
     app = wx.App()
     frame = MainFrame()
     if args.smoke_test:
-        return run_smoke_test(app, frame)
+        run_smoke_test(app, frame)
     app.SetTopWindow(frame)
     frame.Show()
     app.MainLoop()
