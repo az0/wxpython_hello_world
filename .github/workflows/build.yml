@@ -187,9 +187,12 @@ jobs:
           done
 
           # Remove unused wx Python extension modules (.so files)
-          for mod in html html2 stc richtext media grid dataview glcanvas svg propgrid ribbon aui xml xrc py adv; do
-            find "$FWDIR" -path "*/wx/*${mod}*" \( -name "*.so" -o -name "*.dylib" \) -delete 2>/dev/null || true
-            find "$FWDIR" -path "*/wx/${mod}" -type d -exec rm -rf {} + 2>/dev/null || true
+          for mod in _html _html2 _stc _richtext _media _grid _dataview _glcanvas _svg _propgrid _ribbon _aui _xml _xrc _adv; do
+            find "$FWDIR" -name "${mod}.cpython-*.so" -delete 2>/dev/null || true
+          done
+          # Remove unused wx subpackage directories
+          for dir in html html2 stc richtext media grid dataview glcanvas svg propgrid ribbon aui xml xrc py adv; do
+            find "$FWDIR" -path "*/wx/${dir}" -type d -exec rm -rf {} + 2>/dev/null || true
           done
 
           # Remove locale/share directories
