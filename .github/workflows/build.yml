@@ -249,3 +249,108 @@ jobs:
         with:
           name: wxHelloWorld-macos-dmg
           path: dist/wxHelloWorld.dmg
+
+  build-windows-nuitka:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3 (64-bit)
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          architecture: x64
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install nuitka
+
+      - name: Build EXE with Nuitka
+        run: >
+          python -m nuitka
+          --standalone
+          --windows-console-mode=disable
+          --output-dir=dist-nuitka
+          --nofollow-import-to=wx.html,wx.html2,wx.xml,wx.richtext,wx.stc,wx.media,wx.grid,wx.dataview,wx.glcanvas,wx.svg,wx.propgrid,wx.ribbon,wx.aui,wx.py,wx.adv,wx.xrc,tkinter,unittest,test,email,pydoc,doctest,sqlite3,ssl,asyncio,multiprocessing,lib2to3,ensurepip,venv,idlelib,turtledemo,xmlrpc,ftplib,smtplib,imaplib,poplib,socketserver,webbrowser,turtle,concurrent,logging
+          --remove-output
+          app.py
+
+      - name: Smoke test (source)
+        run: python app.py --smoke-test
+
+      - name: Show build size
+        run: |
+          echo "--- Nuitka dist contents ---"
+          dir dist-nuitka
+          dir dist-nuitka\app.dist
+          echo "--- compressed size estimate ---"
+          powershell -Command "Compress-Archive -Path dist-nuitka\app.dist\* -DestinationPath dist-nuitka\wxHelloWorld-nuitka.zip"
+          dir dist-nuitka\wxHelloWorld-nuitka.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wxHelloWorld-windows-x64-nuitka
+          path: dist-nuitka/app.dist
+
+  build-macos-nuitka:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install nuitka
+
+      - name: Build .app bundle with Nuitka
+        run: >
+          python -m nuitka
+          --standalone
+          --macos-create-app-bundle
+          --macos-app-name=wxHelloWorld
+          --output-dir=dist-nuitka
+          --nofollow-import-to=wx.html,wx.html2,wx.xml,wx.richtext,wx.stc,wx.media,wx.grid,wx.dataview,wx.glcanvas,wx.svg,wx.propgrid,wx.ribbon,wx.aui,wx.py,wx.adv,wx.xrc,tkinter,unittest,test,email,pydoc,doctest,sqlite3,ssl,asyncio,multiprocessing,lib2to3,ensurepip,venv,idlelib,turtledemo,xmlrpc,ftplib,smtplib,imaplib,poplib,socketserver,webbrowser,turtle,concurrent,logging
+          --remove-output
+          app.py
+
+      - name: Smoke test built app
+        run: |
+          dist-nuitka/app.app/Contents/MacOS/app --smoke-test
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG installer
+        run: |
+          create-dmg \
+            --volname "wxHelloWorld" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "app.app" 150 190 \
+            --app-drop-link 450 190 \
+            --no-internet-enable \
+            "dist-nuitka/wxHelloWorld-nuitka.dmg" \
+            "dist-nuitka/app.app"
+
+      - name: Show build size
+        run: |
+          echo "--- Nuitka dist contents ---"
+          ls -lh dist-nuitka/
+          echo "--- .app bundle size ---"
+          du -sh dist-nuitka/app.app
+          echo "--- DMG size ---"
+          ls -lh dist-nuitka/wxHelloWorld-nuitka.dmg
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wxHelloWorld-macos-dmg-nuitka
+          path: dist-nuitka/wxHelloWorld-nuitka.dmg

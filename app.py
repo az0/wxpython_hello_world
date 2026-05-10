@@ -12,8 +12,72 @@ def run_smoke_test(app, frame):
     app.SetTopWindow(frame)
     frame.Show()
     app.ProcessPendingEvents()
+
+    errors = []
+
+    # 1. Verify frame basics
+    if not frame.GetTitle():
+        errors.append("frame has no title")
+    if not frame.GetStatusBar():
+        errors.append("status bar missing")
+    if not frame.GetToolBar():
+        errors.append("toolbar missing")
+
+    # 2. Verify tree was seeded (constructor adds 3 items)
+    count = frame._count_items()
+    if count < 3:
+        errors.append("expected >=3 seed items, got {}".format(count))
+
+    # 3. Add a random top-level item
+    prev = count
+    frame._add_random_item()
+    app.ProcessPendingEvents()
+    count = frame._count_items()
+    if count != prev + 1:
+        errors.append("add_random_item: expected {} items, got {}".format(prev + 1, count))
+
+    # 4. Select an item and add a child
+    root_child, _ = frame.tree.GetFirstChild(frame.root)
+    if root_child.IsOk():
+        frame.tree.SelectItem(root_child)
+        app.ProcessPendingEvents()
+        prev = count
+        child = frame.tree.AppendItem(root_child, "Smoke Child")
+        frame.tree.Expand(root_child)
+        frame._update_status()
+        app.ProcessPendingEvents()
+        count = frame._count_items()
+        if count != prev + 1:
+            errors.append("add child: expected {} items, got {}".format(prev + 1, count))
+
+    # 5. Clear the tree
+    frame.tree.DeleteChildren(frame.root)
+    frame._update_status()
+    app.ProcessPendingEvents()
+    count = frame._count_items()
+    if count != 0:
+        errors.append("clear: expected 0 items, got {}".format(count))
+
+    # 6. Verify status bar updates
+    status_text = frame.GetStatusBar().GetStatusText()
+    if "0" not in status_text:
+        errors.append("status bar should show 0 after clear, got: {}".format(status_text))
+
+    # 7. Verify random_label works
+    from words import random_label
+    label = random_label()
+    if not label or len(label.split()) != 2:
+        errors.append("random_label() returned bad value: {}".format(label))
+
     frame.Destroy()
     app.ProcessPendingEvents()
+
+    if errors:
+        for e in errors:
+            print("SMOKE FAIL: {}".format(e), flush=True)
+        os._exit(1)
+
+    print("SMOKE OK: all checks passed", flush=True)
     os._exit(0)
 
 
