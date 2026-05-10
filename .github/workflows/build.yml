@@ -29,6 +29,7 @@ jobs:
           --name wxHelloWorld
           --strip
           --noupx
+          --add-binary "C:\Windows\System32\MSVCP140.dll;."
           --exclude-module wx.html
           --exclude-module wx.html2
           --exclude-module wx.xml
