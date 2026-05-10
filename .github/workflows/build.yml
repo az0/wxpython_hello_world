@@ -22,6 +22,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install UPX
+        run: choco install upx -y --no-progress
+
       - name: Build EXE with PyInstaller
         run: >
           pyinstaller
@@ -90,6 +93,15 @@ jobs:
           }
           # Remove .pdb debug files
           Get-ChildItem -Path $dist -Recurse -Filter "*.pdb" | Remove-Item -Force -ErrorAction SilentlyContinue
+
+      - name: Compress binaries with UPX
+        shell: powershell
+        run: |
+          $dist = "dist\wxHelloWorld"
+          Get-ChildItem -Path $dist -Recurse -Include "*.pyd","*.dll" | ForEach-Object {
+            $null = & upx $_.FullName 2>&1
+          }
+          exit 0
 
       - name: Smoke test
         run: python app.py --smoke-test
