@@ -22,19 +22,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Install UPX
-        run: choco install upx --yes
-
       - name: Build EXE with PyInstaller
         run: >
           pyinstaller
           --windowed
           --name wxHelloWorld
           --strip
-          --upx-exclude python312.dll
-          --upx-exclude vcruntime140.dll
-          --upx-exclude vcruntime140_1.dll
-          --upx-exclude ucrtbase.dll
+          --noupx
           --exclude-module wx.html
           --exclude-module wx.html2
           --exclude-module wx.xml
