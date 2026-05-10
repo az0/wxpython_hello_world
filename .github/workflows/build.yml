@@ -272,10 +272,31 @@ jobs:
           --standalone
           --assume-yes-for-downloads
           --windows-console-mode=disable
+          --lto=yes
+          --enable-plugin=anti-bloat
           --output-dir=dist-nuitka
           --nofollow-import-to=wx.html,wx.html2,wx.xml,wx.richtext,wx.stc,wx.media,wx.grid,wx.dataview,wx.glcanvas,wx.svg,wx.propgrid,wx.ribbon,wx.aui,wx.py,wx.adv,wx.xrc,tkinter,unittest,test,email,pydoc,doctest,sqlite3,ssl,asyncio,multiprocessing,lib2to3,ensurepip,venv,idlelib,turtledemo,xmlrpc,ftplib,smtplib,imaplib,poplib,socketserver,webbrowser,turtle,concurrent,logging
           --remove-output
           app.py
+
+      - name: Remove unused files from dist
+        shell: powershell
+        run: |
+          $dist = "dist-nuitka\app.dist"
+          # Remove locale files
+          $localeDirs = @("share", "wx\locale")
+          foreach ($d in $localeDirs) {
+            $p = Join-Path $dist $d
+            if (Test-Path $p) { Remove-Item -Recurse -Force $p }
+          }
+          # Remove unused wx DLLs if present
+          $patterns = @("wx*html*", "wx*stc*", "wx*richtext*", "wx*media*", "wx*gl*", "wx*xml*", "wx*xrc*", "wx*propgrid*", "wx*ribbon*", "wx*aui*", "wx*svg*", "wx*adv*")
+          foreach ($pat in $patterns) {
+            Get-ChildItem -Path $dist -Recurse -Filter $pat | Remove-Item -Force -ErrorAction SilentlyContinue
+          }
+          # Remove .pdb debug files and .pyi stubs
+          Get-ChildItem -Path $dist -Recurse -Filter "*.pdb" | Remove-Item -Force -ErrorAction SilentlyContinue
+          Get-ChildItem -Path $dist -Recurse -Filter "*.pyi" | Remove-Item -Force -ErrorAction SilentlyContinue
 
       - name: Smoke test (source)
         run: python app.py --smoke-test
@@ -316,10 +337,52 @@ jobs:
           --standalone
           --macos-create-app-bundle
           --macos-app-name=wxHelloWorld
+          --lto=yes
+          --enable-plugin=anti-bloat
           --output-dir=dist-nuitka
           --nofollow-import-to=wx.html,wx.html2,wx.xml,wx.richtext,wx.stc,wx.media,wx.grid,wx.dataview,wx.glcanvas,wx.svg,wx.propgrid,wx.ribbon,wx.aui,wx.py,wx.adv,wx.xrc,tkinter,unittest,test,email,pydoc,doctest,sqlite3,ssl,asyncio,multiprocessing,lib2to3,ensurepip,venv,idlelib,turtledemo,xmlrpc,ftplib,smtplib,imaplib,poplib,socketserver,webbrowser,turtle,concurrent,logging
           --remove-output
           app.py
+
+      - name: Remove unused files from .app
+        run: |
+          CONTENTS="dist-nuitka/app.app/Contents"
+          FWDIR="$CONTENTS/Frameworks"
+          RESDIR="$CONTENTS/Resources"
+          MACDIR="$CONTENTS/MacOS"
+
+          echo "=== Before cleanup ==="
+          du -sh dist-nuitka/app.app
+
+          # Remove unused wx native dylibs
+          for pat in "*html*" "*stc*" "*richtext*" "*media*" "*gl*" "*xml*" "*xrc*" "*propgrid*" "*ribbon*" "*aui*" "*svg*" "*webview*" "*qa*" "*adv*"; do
+            find dist-nuitka/app.app -name "libwx_osx*${pat}*" -delete 2>/dev/null || true
+          done
+
+          # Remove unused wx Python extension modules (.so files)
+          for mod in _html _html2 _stc _richtext _media _grid _dataview _glcanvas _svg _propgrid _ribbon _aui _xml _xrc _adv; do
+            find dist-nuitka/app.app -name "${mod}.cpython-*.so" -delete 2>/dev/null || true
+          done
+          # Remove unused wx subpackage directories
+          for dir in html html2 stc richtext media grid dataview glcanvas svg propgrid ribbon aui xml xrc py adv; do
+            find dist-nuitka/app.app -path "*/wx/${dir}" -type d -exec rm -rf {} + 2>/dev/null || true
+          done
+
+          # Remove locale/share directories
+          find dist-nuitka/app.app -path "*/locale" -type d -exec rm -rf {} + 2>/dev/null || true
+          find dist-nuitka/app.app -path "*/locales" -type d -exec rm -rf {} + 2>/dev/null || true
+          rm -rf "$RESDIR/share" 2>/dev/null || true
+
+          # Remove .pyi stub files, __pycache__, .dist-info
+          find dist-nuitka/app.app -name "*.pyi" -delete 2>/dev/null || true
+          find dist-nuitka/app.app -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+          find dist-nuitka/app.app -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
+
+          # Strip dylibs and .so files
+          find dist-nuitka/app.app \( -name "*.dylib" -o -name "*.so" \) -exec strip -x -S {} \; 2>/dev/null || true
+
+          echo "=== After cleanup ==="
+          du -sh dist-nuitka/app.app
 
       - name: Smoke test built app
         run: |
