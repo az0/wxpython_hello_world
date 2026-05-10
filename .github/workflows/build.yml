@@ -264,12 +264,13 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install nuitka
+          pip install nuitka ordered-set zstandard
 
       - name: Build EXE with Nuitka
         run: >
           python -m nuitka
           --standalone
+          --assume-yes-for-downloads
           --windows-console-mode=disable
           --output-dir=dist-nuitka
           --nofollow-import-to=wx.html,wx.html2,wx.xml,wx.richtext,wx.stc,wx.media,wx.grid,wx.dataview,wx.glcanvas,wx.svg,wx.propgrid,wx.ribbon,wx.aui,wx.py,wx.adv,wx.xrc,tkinter,unittest,test,email,pydoc,doctest,sqlite3,ssl,asyncio,multiprocessing,lib2to3,ensurepip,venv,idlelib,turtledemo,xmlrpc,ftplib,smtplib,imaplib,poplib,socketserver,webbrowser,turtle,concurrent,logging
